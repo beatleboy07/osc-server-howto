@@ -1,0 +1,44 @@
+.pageHead {
+  background-color: #2CDEAE
+}
+
+.introContent {
+  background-color: #FFDEAD
+}
+
+.supercollider {
+  background-color: #90EE90
+}
+
+.nodejs {
+  background-color: #2CDEAE
+}
+.html {
+  background-color: #FFDEAD
+}
+
+.end{
+  background-color: #90EE90
+}
+h1 {
+  font-size: 42pt
+}
+
+.bodyHeads {
+  color: red
+}
+
+.subs {
+  font-style: italic;
+}
+
+p {
+  font-family: Helvetica
+}
+
+
+pre {
+    white-space: pre-wrap;
+    background: #C0C0C0;
+    font-family: monospace;
+}
