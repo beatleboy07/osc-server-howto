@@ -1,0 +1,443 @@
+<!Doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Sample OSC Layout</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+</head>
+
+<body>
+    <section class="pageHead">
+        <h1>Open Sound Control</h1>
+        <h2>A How-To Guide by Clifford Dunn</h2>
+    </section>
+    </br>
+
+    <section class="introContent">
+
+        <h2 class="bodyHeads">What is OSC?</h2>
+        <p>
+            Open Sound Control, or OSC was created at the
+            <a href="http://music.berkeley.edu/about-us/resources-and-facilities/cnmat/">
+          Center for New Music and Audio Technologies (CNMAT)</a> University of California in Berkeley. OSC was created as an eventual successor to the Musical Instrument Digital Interface (MIDI) that was made particularly popular in the 1980's.
+            While MIDI was revolutionary for its time, it is inherently limited in terms of resolution (only allows numbered data in a range from 0-127), hardware (MIDI typically requires a hardware interface while OSC does not), precision (MIDI has a
+            low resolution precision by today's standards which is accurate to milliseconds while OSC is modern and accurate to the picosecond), and data type (MIDI can only transmit integers while OSC can transmit integers, strings, floating point numbers,
+            and more).
+        </p>
+
+        <p>
+            For more information about OSC, follow these links:
+        </p>
+
+        <ul>
+            <li><a href="http://opensoundcontrol.org/">Open Sound Control Homepage</a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Open_Sound_Control">Wikipedia</a></li>
+        </ul>
+
+        </br>
+
+        <h2 class="bodyHeads">OSC seems cool. But MIDI is in everything. What understands OSC?</h2>
+        <p>
+            OSC is supported in many music software systems. A small sample of some of my favorite software (with links!):
+        </p>
+
+        <ul>
+            <li><a href="http://supercollider.github.io/">SuperCollider</a> My personal favorite</li>
+            <li><a href="https://puredata.info/">pd (Pure Data)</a></li>
+            <li><a href="https://cycling74.com/products/max/#.WLfmbCErJnE">Max</a></li>
+            <li><a href="http://csound.github.io/">csound</a></li>
+            <li><a href="https://www.ableton.com/en/">Ableton Live</a> Requires external libraries.</li>
+        </ul>
+
+        </br>
+        <h2 class="bodyHeads">Okay, I love it! What are you going to show me?</h2>
+
+        <p>
+            While the protocol for OSC is solid and great. The types of interfaces available leave a lot to be desired. With some ingenuity, it is possible to create an interface for your web browser to send OSC data to your computer which can then be used to control
+            music you create. You will need the following:
+        </p>
+
+        <ul>
+            <li>A modern internet browser (Firefox, Chrome, Opera, IE 10+)</li>
+            <li>Capability to run node.js and npm.</li>
+            <li>A text editor or preferred IDE for HTML, CSS, and JavaScript code</li>
+            <li>A preferred application for interfacing with music is beneficial.</li>
+            <ul>
+                <li class="subs">I will provide samples with SuperCollider</li>
+            </ul>
+            <li>Optional: Server space to host a node.js application for relaying OSC communications</li>
+            <ul>
+                <li class="subs">For the purpose of this guide, I have set up a server with <a href="https://www.digitalocean.com">Digital Ocean</a></li>
+            </ul>
+        </ul>
+
+        <h2 class="bodyHeads">Okay, I have it all. What do we do first?</h2>
+
+        <p>
+            We are going to begin by using the <a href="https://github.com/russellmcc/node-osc-min"> node-osc-min API</a>. There are many OSC APIs available, but this one is the most recently updated and it is rather simple to use for our needs. This
+            particular API is great to get a node.js server up and communicating quickly so you can make music sooner. This particular API also integrates well with web browsers and UDP communication, so deployment on a web server for remote communication
+            is possible.
+        </p>
+
+    </section>
+
+    <section class="supercollider">
+
+        <h2 class="bodyHeads">Woah there. Is this all worth it? Let's see some OSC in action first.</h2>
+
+        <p>
+            Okay then. For this sample, I recommend you download and install <a href="http://supercollider.github.io/">SuperCollider</a> first and follow along with these examples.
+        </p>
+
+        <h2 class="bodyHeads">SuperCollider? This looks like an IDE for a programming language!</h2>
+
+        <p>
+            That's because it is! SuperCollider is an environment for creating sound in general, and music in particular. It has a variety of possibilities that you can learn from the very finely crafted documentation. But there are two things in particular I want
+            you to remember.
+        </p>
+
+        <ul>
+            <li>SuperCollider has two applications:</li>
+            <ul>
+                <li>The client: the IDE that you see where you can develop your sound synthesizers.</li>
+                <li>The server: the application that generates sound and connects to your communication ports.</li>
+            </ul>
+            <li>SuperCollider does all of its communication even between the two applications with OSC.</li>
+        </ul>
+
+        <p>
+            So let's start things up and run some code!
+        </p>
+        <pre><code>
+              s.boot;
+            </code></pre>
+
+        <p>
+            Run this code by placing your cursor in the same line and running execute with either Shift+Return, Ctrl+Return, or simply using the Language menu above. If you look in the listener window, you will see a lot of information fly by as the server boots
+            up and sends data to the interpreter.
+        </p>
+
+        <pre><code>
+              {SinOsc.ar(440)}.play;
+            </code></pre>
+
+        <p>
+            Evaluate this code. Assuming your audio devices are properly connected, you will hear a cosine wave oscillating at 440 MhZ. You can stop the playback with Ctrl+Period or through the language menu again.
+        </p>
+        </br>
+        <p>
+            Congratulations! You just made your first sound with SuperCollider! Feel free to read and experiment with the tutorials within the program. From this point, I will not provide any more examples of sound synthesis.
+        </p>
+
+        <h2 class="bodyHeads">I thought you said we were going to work with OSC!</h2>
+
+        <p>
+            And we are. OSC communicates naturally over <a href="https://en.wikipedia.org/wiki/User_Datagram_Protocol">UDP</a>. So we need to know things about our network connection. In order to communicate across the internet, we will need to know two
+            things:
+        </p>
+        <ul>
+            <li>An IP address</li>
+            <li>A port number</li>
+        </ul>
+
+        <p>
+            SuperCollider always attempts to connect to port number 57120. It will also respond to the IP address 127.0.0.1 or "localhost". If port 57120 is already occupied, SuperCollider can't connect to it. This is the general scenario for all applications. Only
+            one application can be connected to a particular port. If you ever encounter problems interacting with OSC, this would be the first thing to check.
+        </p>
+
+        <pre><code>
+            NetAddr.langPort;
+          </code></pre>
+
+        <p>
+            This command will print the port that SuperCollider is currently connected.
+        </p>
+
+        <p>
+            Before we move away from SuperCollider, I have just a few more samples of code you will need.
+        </p>
+
+        <pre><code>
+            n = NetAddr.new("127.0.0.1", 57120);
+            n.sendMsg("/Hello", "/World");
+          </code></pre>
+        <p>
+            This will set you up to communicate with OSC with the simple command n.sendMsg. This will send the message to the IP address and port specified in the initial NetAddr.new.
+        </p>
+
+        <pre><code>
+            f = {arg msg, time, addr; [msg, addr].postln;};
+            thisProcess.addOSCRecvFunc(f);
+          </code></pre>
+
+        <p>
+            This will set you up to view received OSC in the listener window. The message and address will be printed when the communication is received. f defines the function and the addOSCRecvFunc method listens on the UDP port.
+        </p>
+
+        <pre><code>
+            thisProcess.removeOSCRecvFunc(f);
+          </code></pre>
+
+        <p>
+            This will stop the listening process on the port.
+        </p>
+
+        <p>
+            And since I promised you some OSC action, here's a small taste of what you can do with OSC and SuperCollider:
+        </p>
+
+        <pre><code>
+          n = NetAddr.new("127.0.0.1", 57120);
+          r = Routine({
+            loop({
+               i = 0.rrand(100);
+               n.sendMsg("/hello", i);
+               1.wait;
+             })
+           });
+           r.reset.play
+         </code></pre>
+
+        <p>
+            If you keep your eye on the listener window, you will see OSC messages coming in and being displayed.
+        </p>
+        </br>
+        <p>
+            <h3>And this concludes everything I have to say about using SuperCollider. Let's get into some JavaScript and set up an OSC server!</h3>
+        </p>
+
+    </section>
+
+    <section class="nodejs">
+        <h2 class="bodyHeads">Okay, let's set up an OSC Server!</h2>
+
+        <p>
+            The first thing you'll need for this is to make sure node.js is installed. In my case, I use <a href="https://www.archlinux.org/">ArchLinux</a> so from a terminal I run:
+        </p>
+        <pre><code>
+        sudo pacman -S nodejs
+      </pre></code>
+        <p>
+            An important note is that the node package manager is not installed with node.js. So for me, it is also vital to run:
+        </p>
+        sudo pacman -S npm
+        </code>
+        </pre>
+
+        <p>
+            Do whatever your operating system requires to make sure you have both node.js and npm installed on your system. Once this is done, generate your package.json file:
+            <pre><code>
+        npm init
+      </pre></code>
+            and create and edit a server.js file.
+        </p>
+
+        <h2 class="bodyHeads">I'm with you this far. What are the APIs we need?</h2>
+        <p>
+            The main API we are looking at is the osc-min API. But we are also going to want our server to have a web interface, connect to UDP, read our external browser files, and properly send OSC data back and forth. Here is what our initial file will look like
+            when all the APIs are included:
+        </p>
+        <pre><code>
+      var http = require('http');
+      var socketio = require('socketio');
+      var fs = require('fs');
+      var osc = require('osc');
+      var dgram = require('dgram');
+    </code></pre>
+
+        <p>
+            Install these modules and update your package.json.
+        </p>
+
+        <p>
+            There are four other variables we'll need. I like to add them all under the require objects.
+            <pre><code>
+            var scPort = 57120;
+            var listenPort = 8080;
+            var bindPort = 9998;
+            var remoteOSCIP;
+          </code></pre> We remember that SuperCollider listens on port 57120. The listenPort and bindPort may vary depending on your server's allowable ports. If, like I did, you set up a node.js server on Digital Ocean, these settings should
+            work just fine.
+        </p>
+
+        <h2 class="bodyHeads">Great. What's next?</h2>
+
+        <p>
+            Let's set up our http server so we can interact with OSC remotely through a web browser.
+
+            <pre><code>
+              var httpServer = http.createServer(function(req, res) {
+
+                fs.readFile(__dirname + '/oscserver.html', function(error, data) {
+
+                  if(error) {
+                    res.writeHead(500);
+                    return res.end("Error loading oscserver.html");
+                  }
+
+                  res.writeHead(200);
+                  res.end(data);
+                });
+
+              });
+            </code></pre> So this code creates an http server, looks in the local file directory for the oscserver.html file, and if it finds it, activates it on the localhost.
+        </p>
+        <p>
+            Next we want to connect this server to a UDP port. and have it listen for OSC communication.
+            <pre><code>
+              var io = socketio(httpServer);
+
+              var udpServer = dgram.createSocket('udp4', function(msg, remoteInfo) {
+
+                var oscMessage;
+                try {
+                  oscMessage = osc.fromBuffer(msg);
+                } catch(error) {
+                  return console.log("Did not understand OSC message!");
+                }
+
+                if(oscMessage.address != '/oscserver') {
+                  return console.log("Inalid OSC address");
+                }
+
+                remoteOSCIP = remoteInfo.address;
+
+                io.emit('osc', {
+                  x: parseInt(oscMessage.args[0].value) || 0,
+                  y: parseInt(oscMessage.args[1].value) || 0
+                });
+
+              });
+            </code></pre> This function sets up a UDP based server that is connected with socketio to the http server. It listens for a remote signal (remoteInfo) and takes the data (msg) and extracts OSC from it. This code will only function
+            if the OSC message has the address (first argument of the message) of /oscserver. When the function receives this data, it will store the incoming IP address (remoteOSCIP) and emit integer values to the http web page.
+        </p>
+
+        <p>
+            So now we are set up to receive OSC data! Next, we also want to be able to send data back to our original application.
+            <pre><code>
+              io.on('connection', function(socket) {
+
+                socket.on('browser', function(data) {
+
+                  if(!remoteOSCIP) {
+                    return;
+                  }
+
+                  var oscMsg = osc.toBuffer({
+                    oscType: 'message',
+                    address: '/oscserver',
+                    args:[{
+                      type: 'integer',
+                      value: parseInt(data.x) || 0
+                    },
+                    {
+                      type: 'integer',
+                      value: parseInt(data.y) || 0
+                    }
+                    }]
+                  });
+
+                  udpServer.send(oscMsg, 0, oscMsg.length, scPort, remoteOSCIP);
+                  console.log("OSC message sent to %s:%d", remoteOSCIP, scPort);
+
+                });
+
+              });
+            </code></pre> This is where some of the most powerful aspects of OSC come to life. the osc.toBuffer command will parse the enclosed data into an OSC compatible transmission. From here, we can send it to our remote application with
+            udpServer.send. This will send an OSC message to the address found from remoteOSCIP.
+        </p>
+
+        <p>
+            There is just one more step to this setup. Our functions currently are not connected to any communication ports, so we need two more commands:
+            <pre><code>
+              httpServer.listen(listenPort);
+              udpServer.bind(bindPort);
+              console.log("Starting HTTP server on TCP port %d", listenPort);
+              consoe.log("Starting UDP server on UDP port %d", bindPort);
+            </code></pre> And that's it! We can now have an http web page and a UDP server for sending OSC communication anywhere in the world!
+            </br>
+            In order to activate this, simply go to your command line and run:
+            <pre><code>
+            node server.js
+          </code></pre>
+        </p>
+    </section>
+
+    <section class="html">
+        <h2 class="bodyHeads">You say web browser. We must need some sort of HTML file.</h2>
+
+        <p>
+            That's right. Since we are on the web, we have the full capabilities of CSS, HTML5, and JavaScript at our disposal. For this project, I have a very simple HTML file you can use:
+
+
+            <pre><code>
+            &lt!DOCTYPE html&gt
+            &lthtml lang="en"&gt
+              &lthead&gt
+                &ltmeta charset="utf-8"&gt
+                &lttitle&gtsocket.io & osc example&lt/title&gt
+                &ltscript src="/socket.io/socket.io.js"&gt&lt/script&gt
+              &lt/head&gt
+              &ltbody&gt
+
+                &lth1&gtsocket.io & osc&lt/h1&gt
+
+                &ltinput type="number" id="x" value="0"&gt
+                &ltinput type="number" id="y" value="0"&gt
+                &ltbutton id="send"&gtSend&lt/button&gt
+
+                &lth2&gtOutput:&lt/h2&gt
+
+                &ltpre id="output"&gt&lt/pre&gt
+
+                &ltscript&gt
+
+                  var socket = io.connect();
+
+                  socket.on('osc', function(data) {
+                    var output = document.getElementById('output');
+                    document.getElementById('x').value = data.x;
+                    document.getElementById('y').value = data.y;
+                    output.innerHTML = output.innerHTML + 'x: ' + data.x + ' y: ' + data.y + '\n';
+                  });
+
+                  document.getElementById('send').addEventListener('click', function() {
+                    socket.emit('browser', {
+                      x: document.getElementById('x').value.trim() || 0,
+                      y: document.getElementById('y').value.trim() || 0
+                    });
+                  });
+
+                &lt/script&gt
+
+              &lt/body&gt
+            &lt/html&gt
+
+          </code></pre> Now in order to see your interface, you can type in your web browser 127.0.0.1:8080 (or whatever address you're hosting your node.js server). This page is very simple and will only respond to integers, but it's the
+            start of really exploring what you can do with JavaScript and Open Sound Control.
+        </p>
+    </section>
+
+    <section class="end">
+      <h2 class="bodyHeads">Wow! This is great! What else can I do?</h2>
+      <p>
+        Your possibilities are as limited as the internet! But if you really want to see this in action, I hav a node.js server set up and active on Digital Ocean. All the code you have seen here is active and running on this server.
+        So you can also simply interface with my server by sending your OSC data (it will only respond to '/oscserver' messages) to 45.55.145.9 on port 9998. Then direct your browser to
+        <a href="http://45.55.145.9:8080">this page</a>. For instance, with SuperCollider, activate a NetAddr:
+        <pre><code>
+          n = NetAddr.new("45.55.145.9", 9998);
+        </code></pre>
+        and then send a message to this address:
+        <pre><code>
+          n.sendMsg("/oscserver", 55, 834);
+        </code></pre>
+        you should see the change in your browser window. You can also send data back to SuperCollider and see it in the listener window.
+
+<h2 class="bodyHeads">I'm convinced! OSC is awesome</h2>
+<p>
+  Thank you for your attention. For any further queries, feel free to contact me <a href="mailto:dunncli@oregonstate.edu">here</a>. 
+    </section>
+</body>
+
+</html>
